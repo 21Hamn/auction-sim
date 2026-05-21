@@ -1,3 +1,5 @@
+#PROJECT MASIH DALAM STATUS PENGEMBANGAN (ALPHA VERSION)
+
 # Untuk Cek Simulasinya Bisa Gunakan Link Berikut: (Sudah Bisa Multiplayer)
 [https://auction-sim-1.onrender.com/](https://auction-sim-1.onrender.com/)
 
