@@ -244,6 +244,14 @@
             <div class="my-balance">💰 <span id="my-balance">$10,000</span></div>
             <div class="my-valuation">🎯 Value: <span id="my-valuation">$0</span></div>
           </div>
+          <div id="auction-host-controls" class="auction-host-bar hidden">
+            <button class="btn-host-action" onclick="hostPauseTimer()" title="Pause/Resume">⏸ Pause</button>
+            <button class="btn-host-action warning" onclick="showNewsModal()" title="Inject News">📰 News</button>
+            <div class="host-kick-inline">
+              <select id="auction-kick-select" class="host-kick-select"></select>
+              <button class="btn-host-action danger" onclick="kickFromAuction()" title="Kick">🚫 Kick</button>
+            </div>
+          </div>
         </div>
       </div>
 
