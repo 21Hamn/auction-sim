@@ -209,6 +209,9 @@ function initAuctionUI(room, round, auctionType, theme) {
   if (auctionType === AUCTION_TYPES.DUTCH) {
     setText('buy-now-price', `$${(auction.currentPrice || auction.startPrice).toLocaleString()}`);
   }
+
+  // Show host controls bar if host
+  showAuctionHostBar(room);
 }
 
 function showBidControls(auctionType) {
@@ -367,6 +370,8 @@ function handleBidUpdate(data) {
 function renderLeaderboard(players) {
   const lb = document.getElementById('leaderboard');
   if (!lb || !players) return;
+  // Refresh host kick dropdown too
+  if (AppState.isHost) updateAuctionKickDropdown(players);
 
   const sorted = [...players].sort((a, b) => b.balance - a.balance);
   lb.innerHTML = '';
@@ -578,4 +583,26 @@ function playBidSound() {
     osc.start(ctx.currentTime);
     osc.stop(ctx.currentTime + 0.15);
   } catch (e) {}
+}
+
+// ── HOST BAR (AUCTION PAGE) ──────────────────────
+
+function showAuctionHostBar(room) {
+  const bar = document.getElementById('auction-host-controls');
+  if (!bar) return;
+
+  if (!AppState.isHost) { bar.classList.add('hidden'); return; }
+  bar.classList.remove('hidden');
+
+  // Populate kick dropdown
+  updateAuctionKickDropdown(room.players);
+}
+
+function updateAuctionKickDropdown(players) {
+  const sel = document.getElementById('auction-kick-select');
+  if (!sel) return;
+  const others = (players || []).filter(p => !p.isHost && !p.isBot);
+  sel.innerHTML = others.length
+    ? others.map(p => `<option value="${p.id}">${p.avatar} ${p.name}</option>`).join('')
+    : '<option value="">— no players —</option>';
 }
