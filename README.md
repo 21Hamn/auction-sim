@@ -250,4 +250,4 @@ Panel **Strategy Guide** muncul otomatis di setiap auction berisi:
 
 ---
 
-*Built with Node.js, Socket.IO, Chart.js | Bloomberg Terminal Aesthetic*
+*Built with Node.js, Socket.IO, Chart.js | Bloomberg Terminal Theme*
