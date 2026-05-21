@@ -238,3 +238,13 @@ document.addEventListener('keydown', (e) => {
     }
   }
 });
+
+// ── HOST: KICK FROM AUCTION PAGE ─────────────────
+
+function kickFromAuction() {
+  const sel = document.getElementById('auction-kick-select');
+  const playerId = sel?.value;
+  if (!playerId) { showToast('Select a player to kick', 'error'); return; }
+  if (!confirm('Kick this player?')) return;
+  emitKickPlayer(playerId);
+}
