@@ -152,7 +152,7 @@ Host room mendapat kontrol penuh:
 
 ---
 
-## 🌐 Multi-Player Setup
+## 🌐 Multi-Player Setup (MASIH ADA BEBERAPA BUG)
 
 ### Jaringan Lokal (LAN)
 ```bash
