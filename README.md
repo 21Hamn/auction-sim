@@ -1,5 +1,5 @@
 # Untuk Cek Simulasinya Bisa Gunakan Link Berikut: (Sudah Bisa Multiplayer)
-[https://auction-sim.onrender.com]
+https://auction-sim-1.onrender.com/
 
 # 🔨 AuctionSim — Real-Time Multiplayer Bidding Platform
 
