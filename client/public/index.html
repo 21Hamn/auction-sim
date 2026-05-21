@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AuctionSim — Real-Time Bidding Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet" />
+  <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="css/main.css" />
+</head>
+<body>
+  <!-- TOAST CONTAINER -->
+  <div id="toast-container"></div>
+
+  <!-- WINNER OVERLAY -->
+  <div id="winner-overlay" class="hidden">
+    <div class="winner-content">
+      <div class="winner-hammer">🔨</div>
+      <div class="winner-label">SOLD!</div>
+      <div id="winner-name" class="winner-name"></div>
+      <div id="winner-price" class="winner-price"></div>
+      <div id="winner-surplus" class="winner-surplus"></div>
+    </div>
+  </div>
+
+  <!-- LANDING PAGE -->
+  <div id="page-landing" class="page active">
+    <div class="landing-bg">
+      <div class="grid-overlay"></div>
+      <div class="scanline"></div>
+    </div>
+
+    <!-- NAV -->
+    <nav class="landing-nav">
+      <div class="brand">
+        <span class="brand-icon">🔨</span>
+        <span class="brand-name">AUCTION<span class="brand-accent">SIM</span></span>
+      </div>
+      <div class="nav-stats">
+        <div class="stat-pill"><span class="dot green"></span> <span id="nav-rooms">0</span> Active Rooms</div>
+        <div class="stat-pill"><span class="dot orange"></span> <span id="nav-players">0</span> Online</div>
+      </div>
+    </nav>
+
+    <!-- HERO -->
+    <div class="hero">
+      <div class="hero-badge">REAL-TIME BIDDING SIMULATOR</div>
+      <h1 class="hero-title">
+        The Art of<br/>
+        <span class="gradient-text">Strategic Bidding</span>
+      </h1>
+      <p class="hero-sub">
+        Experience English, Dutch, Vickrey & Sealed-Bid auctions live.<br/>
+        Master winner's curse, Nash equilibrium, and revenue equivalence.
+      </p>
+      <div class="hero-cta">
+        <button class="btn-primary" onclick="showCreateModal()">
+          <span>🏛️</span> Create Auction
+        </button>
+        <button class="btn-secondary" onclick="showJoinModal()">
+          <span>🎯</span> Join Auction
+        </button>
+      </div>
+    </div>
+
+    <!-- LIVE MONITOR -->
+    <div class="monitor-strip">
+      <div class="monitor-label">LIVE AUCTIONS</div>
+      <div id="live-monitor" class="monitor-ticker">
+        <span class="ticker-item">No active auctions — Create one to start!</span>
+      </div>
+    </div>
+
+    <!-- FEATURES GRID -->
+    <div class="features-section">
+      <div class="section-title">Auction Types</div>
+      <div class="auction-types-grid">
+        <div class="type-card english">
+          <div class="type-icon">📈</div>
+          <div class="type-name">English Auction</div>
+          <div class="type-desc">Open ascending bids. Classic competitive format with auto-bid support.</div>
+        </div>
+        <div class="type-card dutch">
+          <div class="type-icon">📉</div>
+          <div class="type-name">Dutch Auction</div>
+          <div class="type-desc">Price drops until someone buys. Speed and strategy decide the winner.</div>
+        </div>
+        <div class="type-card vickrey">
+          <div class="type-icon">🔒</div>
+          <div class="type-name">Vickrey Auction</div>
+          <div class="type-desc">Second-price sealed bid. Truth-telling is the dominant strategy.</div>
+        </div>
+        <div class="type-card sealed">
+          <div class="type-icon">📋</div>
+          <div class="type-name">First-Price Sealed</div>
+          <div class="type-desc">Highest secret bid wins. Nash equilibrium in action.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GLOBAL STATS -->
+    <div class="global-stats-section">
+      <div class="gstat">
+        <div class="gstat-num" id="gs-rooms">0</div>
+        <div class="gstat-label">Active Rooms</div>
+      </div>
+      <div class="gstat">
+        <div class="gstat-num" id="gs-players">0</div>
+        <div class="gstat-label">Total Players</div>
+      </div>
+      <div class="gstat">
+        <div class="gstat-num" id="gs-auctions">0</div>
+        <div class="gstat-label">Live Auctions</div>
+      </div>
+      <div class="gstat">
+        <div class="gstat-num" id="gs-bids">0</div>
+        <div class="gstat-label">Bids Placed</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOBBY PAGE -->
+  <div id="page-lobby" class="page hidden">
+    <div class="lobby-layout">
+      <!-- LEFT: Room Info -->
+      <div class="lobby-left">
+        <div class="room-header">
+          <button class="btn-back" onclick="leaveLobby()">← Back</button>
+          <div class="room-code-display">
+            <div class="rcd-label">ROOM CODE</div>
+            <div class="rcd-code" id="lobby-room-code">------</div>
+            <button class="btn-copy" onclick="copyRoomCode()">📋 Copy</button>
+          </div>
+        </div>
+
+        <div class="settings-panel" id="settings-panel">
+          <div class="panel-title">Auction Settings</div>
+          <div class="setting-row">
+            <label>Auction Type</label>
+            <select id="setting-type" class="setting-select">
+              <option value="english">📈 English Auction</option>
+              <option value="dutch">📉 Dutch Auction</option>
+              <option value="first_price_sealed">📋 First-Price Sealed</option>
+              <option value="second_price_sealed">🔒 Vickrey (2nd Price)</option>
+            </select>
+          </div>
+          <div class="setting-row">
+            <label>Theme</label>
+            <select id="setting-theme" class="setting-select">
+              <option value="art">🎨 Fine Art</option>
+              <option value="oil">🛢️ Oil Field</option>
+              <option value="spectrum">📡 Spectrum License</option>
+              <option value="startup">🚀 Startup Valuation</option>
+              <option value="nft">🖼️ NFT</option>
+              <option value="commodity">🌾 Commodity</option>
+            </select>
+          </div>
+          <div class="setting-row">
+            <label>Rounds</label>
+            <input type="number" id="setting-rounds" class="setting-input" value="3" min="1" max="10" />
+          </div>
+          <div class="setting-row">
+            <label>Timer (sec)</label>
+            <input type="number" id="setting-timer" class="setting-input" value="45" min="15" max="120" />
+          </div>
+          <div class="setting-row">
+            <label>AI Bots</label>
+            <input type="number" id="setting-bots" class="setting-input" value="5" min="0" max="25" />
+          </div>
+          <div class="setting-row">
+            <label>Educational Mode</label>
+            <input type="checkbox" id="setting-edu" />
+          </div>
+          <button class="btn-start" id="btn-start" onclick="startAuction()">
+            🔨 START AUCTION
+          </button>
+        </div>
+
+        <div class="host-controls hidden" id="host-controls">
+          <div class="panel-title">Host Controls</div>
+          <button class="btn-control" onclick="hostPauseTimer()">⏸ Pause/Resume</button>
+          <button class="btn-control warning" onclick="showNewsModal()">📰 Inject News</button>
+          <div class="host-kick">
+            <div class="panel-title">Kick Player</div>
+            <select id="kick-select" class="setting-select"></select>
+            <button class="btn-control danger" onclick="kickSelectedPlayer()">🚫 Kick</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CENTER: Players -->
+      <div class="lobby-center">
+        <div class="panel-title">Players <span id="player-count-badge" class="count-badge">0/10</span></div>
+        <div id="players-list" class="players-list"></div>
+        <div class="ready-row">
+          <button class="btn-ready" id="btn-ready" onclick="toggleReady()">Ready Up</button>
+        </div>
+      </div>
+
+      <!-- RIGHT: Chat -->
+      <div class="lobby-right">
+        <div class="chat-panel">
+          <div class="panel-title">Live Chat</div>
+          <div id="chat-messages" class="chat-messages"></div>
+          <div class="chat-input-row">
+            <input type="text" id="chat-input" class="chat-input" placeholder="Type a message..." maxlength="200" onkeydown="chatKeydown(event)" />
+            <button class="btn-chat-send" onclick="sendChat()">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AUCTION PAGE -->
+  <div id="page-auction" class="page hidden">
+    <div class="auction-layout">
+
+      <!-- TOP BAR -->
+      <div class="auction-topbar">
+        <div class="topbar-left">
+          <div class="auction-title-badge" id="auction-type-badge">ENGLISH AUCTION</div>
+          <div class="theme-badge" id="auction-theme-badge">🎨 Fine Art</div>
+          <div class="round-badge">Round <span id="auction-round">1</span>/<span id="auction-total-rounds">3</span></div>
+        </div>
+        <div class="topbar-center">
+          <div class="price-display">
+            <div class="price-label" id="price-label">CURRENT BID</div>
+            <div class="price-value" id="current-price">$0</div>
+          </div>
+          <div class="timer-display">
+            <div class="timer-ring" id="timer-ring">
+              <svg viewBox="0 0 36 36" class="timer-svg">
+                <circle class="timer-bg" cx="18" cy="18" r="15.9"/>
+                <circle class="timer-progress" id="timer-progress-circle" cx="18" cy="18" r="15.9"/>
+              </svg>
+              <span id="timer-value">60</span>
+            </div>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <div class="my-info">
+            <div class="my-balance">💰 <span id="my-balance">$10,000</span></div>
+            <div class="my-valuation">🎯 Value: <span id="my-valuation">$0</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MAIN AREA -->
+      <div class="auction-main">
+
+        <!-- LEFT PANEL: Leaderboard + Valuations -->
+        <div class="auction-left">
+          <div class="panel-box">
+            <div class="panel-title">🏆 Leaderboard</div>
+            <div id="leaderboard" class="leaderboard"></div>
+          </div>
+          <div class="panel-box">
+            <div class="panel-title">📊 Bid Distribution</div>
+            <canvas id="bid-chart" height="140"></canvas>
+          </div>
+        </div>
+
+        <!-- CENTER: Bidding Area -->
+        <div class="auction-center">
+
+          <!-- Item visualization -->
+          <div class="item-showcase">
+            <div class="item-emoji" id="item-emoji">🎨</div>
+            <div class="item-name" id="item-name">Fine Art Auction</div>
+            <div class="item-desc" id="item-desc">Bid on rare masterpieces</div>
+            <div class="hammer-anim" id="hammer-anim">🔨</div>
+          </div>
+
+          <!-- Bid controls -->
+          <div class="bid-controls" id="bid-controls">
+            <!-- English Auction Controls -->
+            <div id="controls-english" class="control-set hidden">
+              <div class="bid-input-row">
+                <button class="btn-quick-bid" onclick="quickBid(100)">+$100</button>
+                <button class="btn-quick-bid" onclick="quickBid(500)">+$500</button>
+                <button class="btn-quick-bid" onclick="quickBid(1000)">+$1K</button>
+                <button class="btn-quick-bid danger" onclick="foldAuction()">Fold</button>
+              </div>
+              <div class="bid-input-group">
+                <span class="bid-prefix">$</span>
+                <input type="number" id="bid-amount-english" class="bid-input" placeholder="Enter bid amount" />
+                <button class="btn-place-bid" onclick="placeBidEnglish()">BID</button>
+              </div>
+              <div class="auto-bid-row">
+                <span>Auto-Bid up to:</span>
+                <input type="number" id="auto-bid-max" class="auto-bid-input" placeholder="Max amount" />
+                <button class="btn-auto-bid" onclick="setAutoBid()">Set Auto</button>
+              </div>
+            </div>
+
+            <!-- Dutch Auction Controls -->
+            <div id="controls-dutch" class="control-set hidden">
+              <div class="dutch-price-display">
+                <div class="dutch-label">PRICE DROPPING IN...</div>
+                <div class="dutch-countdown" id="dutch-countdown">2s</div>
+              </div>
+              <button class="btn-buy-now" onclick="buyNow()">
+                <span>💥</span> BUY NOW — <span id="buy-now-price">$0</span>
+              </button>
+              <div class="dutch-hint">Act fast! Price drops every few seconds.</div>
+            </div>
+
+            <!-- Sealed Bid Controls -->
+            <div id="controls-sealed" class="control-set hidden">
+              <div class="sealed-hint">Your bid is SECRET. Submit once — no changes!</div>
+              <div class="bid-input-group">
+                <span class="bid-prefix">$</span>
+                <input type="number" id="bid-amount-sealed" class="bid-input" placeholder="Your secret bid" />
+                <button class="btn-place-bid sealed" id="btn-submit-sealed" onclick="placeSecretBid()">SUBMIT</button>
+              </div>
+              <div class="sealed-strategy" id="sealed-strategy-hint">
+                💡 Optimal: Bid your true valuation (Vickrey) or (N-1)/N × value (First-Price)
+              </div>
+              <div id="sealed-submitted" class="sealed-submitted hidden">
+                ✅ Bid submitted! Waiting for others...
+              </div>
+            </div>
+          </div>
+
+          <!-- Bid Feed -->
+          <div class="bid-feed-panel">
+            <div class="panel-title">📡 Live Bid Feed</div>
+            <div id="bid-feed" class="bid-feed"></div>
+          </div>
+        </div>
+
+        <!-- RIGHT: Chat + Info -->
+        <div class="auction-right">
+          <div class="panel-box tall">
+            <div class="panel-title">💬 Chat</div>
+            <div id="auction-chat" class="chat-messages"></div>
+            <div class="chat-input-row">
+              <input type="text" id="auction-chat-input" class="chat-input" placeholder="Chat..." maxlength="200" onkeydown="auctionChatKeydown(event)" />
+              <button class="btn-chat-send" onclick="sendAuctionChat()">→</button>
+            </div>
+          </div>
+
+          <!-- Educational Panel -->
+          <div class="panel-box" id="edu-panel">
+            <div class="panel-title">📚 Strategy Guide</div>
+            <div id="edu-content" class="edu-content"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTS PAGE -->
+  <div id="page-results" class="page hidden">
+    <div class="results-layout">
+      <div class="results-header">
+        <div class="results-title">Round <span id="result-round">1</span> Complete</div>
+        <div class="results-subtitle" id="result-next-info">Next round in 8 seconds...</div>
+      </div>
+
+      <div class="results-main">
+        <!-- Winner card -->
+        <div class="winner-card" id="winner-card">
+          <div class="winner-crown">👑</div>
+          <div class="winner-card-name" id="result-winner-name">-</div>
+          <div class="winner-card-price">Paid: <span id="result-price">$0</span></div>
+          <div class="winner-card-surplus" id="result-surplus"></div>
+          <div class="winners-curse-alert hidden" id="winners-curse-alert">
+            ⚠️ WINNER'S CURSE DETECTED
+          </div>
+        </div>
+
+        <!-- Charts row -->
+        <div class="results-charts">
+          <div class="chart-card">
+            <div class="chart-title">Bid vs Valuation</div>
+            <canvas id="results-bid-chart" height="200"></canvas>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">Revenue Analysis</div>
+            <canvas id="results-revenue-chart" height="200"></canvas>
+          </div>
+        </div>
+
+        <!-- Stats grid -->
+        <div class="results-stats-grid">
+          <div class="rstat"><div class="rstat-val" id="rs-efficiency">0%</div><div class="rstat-label">Efficiency</div></div>
+          <div class="rstat"><div class="rstat-val" id="rs-expected">$0</div><div class="rstat-label">Expected Revenue</div></div>
+          <div class="rstat"><div class="rstat-val" id="rs-actual">$0</div><div class="rstat-label">Actual Revenue</div></div>
+          <div class="rstat"><div class="rstat-val" id="rs-nash">$0</div><div class="rstat-label">Nash Equilibrium</div></div>
+          <div class="rstat"><div class="rstat-val" id="rs-curse">-</div><div class="rstat-label">Winner's Curse</div></div>
+          <div class="rstat"><div class="rstat-val" id="rs-true-value">$0</div><div class="rstat-label">True Common Value</div></div>
+        </div>
+
+        <!-- Bid table -->
+        <div class="bid-table-section">
+          <div class="panel-title">All Bids Revealed</div>
+          <div id="bid-table" class="bid-table"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODALS -->
+  <div id="modal-backdrop" class="modal-backdrop hidden" onclick="closeAllModals()"></div>
+
+  <!-- Create Modal -->
+  <div id="modal-create" class="modal hidden">
+    <div class="modal-header">
+      <div class="modal-title">🏛️ Create Auction Room</div>
+      <button class="modal-close" onclick="closeAllModals()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Your Name</label>
+        <input type="text" id="create-name" class="form-input" placeholder="Enter your name" maxlength="20" />
+      </div>
+      <div class="form-group">
+        <label>Auction Type</label>
+        <select id="create-type" class="form-select">
+          <option value="english">📈 English Auction (Open Ascending)</option>
+          <option value="dutch">📉 Dutch Auction (Descending Price)</option>
+          <option value="first_price_sealed">📋 First-Price Sealed Bid</option>
+          <option value="second_price_sealed">🔒 Vickrey / Second-Price Sealed</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Theme</label>
+        <select id="create-theme" class="form-select">
+          <option value="art">🎨 Fine Art Auction</option>
+          <option value="oil">🛢️ Oil Field Rights</option>
+          <option value="spectrum">📡 Spectrum License</option>
+          <option value="startup">🚀 Startup Investment</option>
+          <option value="nft">🖼️ NFT Collection</option>
+          <option value="commodity">🌾 Commodity Futures</option>
+        </select>
+      </div>
+      <button class="btn-primary full-width" onclick="createRoom()">Create Room</button>
+    </div>
+  </div>
+
+  <!-- Join Modal -->
+  <div id="modal-join" class="modal hidden">
+    <div class="modal-header">
+      <div class="modal-title">🎯 Join Auction</div>
+      <button class="modal-close" onclick="closeAllModals()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Your Name</label>
+        <input type="text" id="join-name" class="form-input" placeholder="Enter your name" maxlength="20" />
+      </div>
+      <div class="form-group">
+        <label>Room Code</label>
+        <input type="text" id="join-code" class="form-input code-input" placeholder="XXXXXX" maxlength="6" style="text-transform:uppercase;letter-spacing:4px;font-size:1.4rem;" />
+      </div>
+      <button class="btn-primary full-width" onclick="joinRoom()">Join Room</button>
+    </div>
+  </div>
+
+  <!-- News Modal -->
+  <div id="modal-news" class="modal hidden">
+    <div class="modal-header">
+      <div class="modal-title">📰 Inject Market News</div>
+      <button class="modal-close" onclick="closeAllModals()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Headline</label>
+        <input type="text" id="news-headline" class="form-input" placeholder="Breaking: Market volatility surges..." maxlength="100" />
+      </div>
+      <div class="form-group">
+        <label>Value Impact: <span id="impact-display">+0%</span></label>
+        <input type="range" id="news-impact" min="-50" max="50" value="0" oninput="updateImpactDisplay(this.value)" />
+      </div>
+      <button class="btn-primary full-width" onclick="injectNews()">Broadcast News</button>
+    </div>
+  </div>
+
+  <script src="js/constants.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/socket.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/auction.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/educational.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
