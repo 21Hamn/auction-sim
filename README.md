@@ -1,3 +1,5 @@
+# Untuk Cek Simulasinya Bisa Gunakan ( https://auction-sim.onrender.com/ )
+
 # 🔨 AuctionSim — Real-Time Multiplayer Bidding Platform
 
 Platform simulasi lelang real-time berbasis WebSocket untuk hingga **30 peserta** dalam jaringan lokal maupun internet. Mendukung 4 jenis auction utama dengan analitik ekonomi lengkap.
