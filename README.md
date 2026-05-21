@@ -235,8 +235,8 @@ Panel **Strategy Guide** muncul otomatis di setiap auction berisi:
 
 ## 📝 Contoh Skenario Penggunaan
 
-### Kelas Ekonomi (30 Mahasiswa)
-1. Dosen buat room, bagikan kode
+### Simulasi Pembelajaran Auction (30 Audiens)
+1. Moderator buat room, bagikan kode
 2. Pilih **Vickrey Auction** untuk demonstrasi dominant strategy
 3. Aktifkan **Educational Mode**
 4. Jalankan 3 round dengan tema berbeda
